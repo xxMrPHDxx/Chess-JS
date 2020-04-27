@@ -30,10 +30,16 @@ export default class Board {
 	getWhitePieces(){ return this.whitePieces; }
 	getBlackPieces(){ return this.blackPieces; }
 	getAllActivePieces(){ return [...this.whitePieces, ...this.blackPieces]; }
+	getWhitePlayer(){ return this.player.white; }
+	getBlackPlayer(){ return this.player.black; }
+	getOpponentPlayer(){ return this.currentPlayer === this.player.white ? this.player.black : this.player.white; }
 	getWhiteLegals(){ return this.player.white.getLegalMoves(); }
 	getBlackLegals(){ return this.player.black.getLegalMoves(); }
 	hasEnPassantPawn(){ return this.enPassantPawn !== null; }
 	getEnPassantPawn(){ return this.enPassantPawn; }
+	isInCheck(){ return this.player.white.isInCheck() || this.player.black.isInCheck(); }
+	isInCheckMate(){ return this.player.white.isInCheckMate() || this.player.black.isInCheckMate(); }
+	isInStaleMate(){ return this.player.white.isInStaleMate() || this.player.black.isInStaleMate(); }
 	static createFromConfiguration(boardConfig, whiteMove=true, moveConfig=Array(64).fill(true), enPassantPawn=null){
 		return Array(64).fill().reduce((builder,_,position)=>{
 			const tile = boardConfig[position]||0;

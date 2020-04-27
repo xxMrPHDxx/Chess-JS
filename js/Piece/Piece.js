@@ -186,7 +186,7 @@ export class King extends Piece {
 		const legalMoves = super.calculateLegalMoves(board);
 		for(const offset of [-9,-8,-7,-1,1,7,8,9]){
 			const destination = this.position + offset;
-			if(!BoardUtils.isValidTile(destination+offset) || 
+			if(!BoardUtils.isValidTile(destination) || 
 				this.hasExclusion(destination,offset)) continue;
 			const tile = board.tiles[destination];
 			if(tile.isOccupied()){

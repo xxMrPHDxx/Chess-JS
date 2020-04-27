@@ -1,9 +1,11 @@
 import {loadAssets} from './loaders.js';
 import Board from './Board/Board.js';
+import MoveFactory from './Move/MoveFactory.js';
 
 import {PawnEnPassantAttack, CastlingMove} from './Move/Move.js';
 import {Rook, Knight, Bishop, Queen, King, Pawn} from './Piece/Piece.js';
 import Alliance from './Player/Alliance.js';
+import MoveStatus from './Move/MoveStatus.js';
 
 /*======================Override=====================*/
 Array.prototype.random = function(){
@@ -26,9 +28,19 @@ const hints = [];
 
 function run(){
 	board = Board.createStandardBoard();
+	// board = Board.createFromConfiguration([
+	// 	0,0,0,0,5,0,0,0,
+	// 	// 4,4,4,4,5,4,4,4,
+	// 	...Array(8).fill(0),
+	// 	0,-6,0,0,0,0,0,0,
+	// 	...Array(48-16).fill(0),
+	// 	-4,-4,-4,-4,-5,-4,-4,-4
+	// ],true,Array(64).fill(true).map((_,i)=>i!==17));
 	sourceTile = destTile = null;
 
 	UpdateBoard(board);
+
+	window.player = board.player;
 
 	// setInterval(()=>{
 	// 	OnTileClicked(0,0);
@@ -43,6 +55,8 @@ function run(){
 		}
 	});
 	canvas.addEventListener('contextmenu', e=>e.preventDefault());
+
+	window.MoveStatus = MoveStatus;
 }
 
 function UpdateBoard(){
@@ -50,9 +64,20 @@ function UpdateBoard(){
 	for(const piece of board.getAllActivePieces()){
 		DrawTile(piece);
 	}
-	for(const {img,r,c} of hints){
-		ctx.drawImage(img,c*56+28,r*56+28);
+
+	const player = board.currentPlayer;
+	const [c,cm,sm] = [player.isInCheck(), player.isInCheckMate(), player.isInStaleMate()];
+	if(c || cm || sm){
+		const img = cm ? gamectx.ui.checkMate : (sm ? gamectx.ui.staleMate : gamectx.ui.check);
+		const pos = board.currentPlayer.king.position;
+		const r = (pos/8)|0, c = pos%8;
+		hints.push({img, r, c, redraw: cm, pos});
 	}
+
+	for(const {img,r,c,redraw,pos} of hints){
+		ctx.drawImage(img,c*56+28,r*56+28);
+		if(redraw) DrawTile(board.tiles[pos].piece);
+	}			
 	hints.splice(0);
 }
 function DrawTile(piece){
@@ -77,12 +102,8 @@ function OnTileClicked(row, col){
 	}else if(destTile === null){
 		destTile = tile;
 		if(sourceTile !== destTile){
-			for(const move of board.currentPlayer.getLegalMoves()){
-				if(move.position !== sourceTile.position || move.destination !== destTile.position)
-					continue;
-				board = move.execute();
-				break;
-			}
+			const transition = MoveFactory.createMove(board, sourceTile, destTile);
+			if(transition.isSuccess()) board = transition.board;
 		}
 		sourceTile = destTile = null;
 	}

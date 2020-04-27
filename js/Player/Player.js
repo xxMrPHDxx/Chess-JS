@@ -1,6 +1,21 @@
 import {King} from '../Piece/Piece.js';
 import Alliance from './Alliance.js';
 
+function calculateAttackOnTile(legalMoves,position){
+	return [...legalMoves].filter(move=>move.destination === position);
+}
+
+function hasEscapeMoves(legalMoves){
+	for(const move of legalMoves){
+		try{
+			if(!move.execute().getOpponentPlayer().isInCheck()){
+				return true;
+			}
+		}catch(e){ console.log(e); continue; }
+	}
+	return false;
+}
+
 export default class Player {
 	constructor(alliance, board, legalMoves, opponentLegalMoves){
 		this.alliance = alliance;
@@ -14,6 +29,14 @@ export default class Player {
 				this.alliance.description
 			} Player!`);
 		}
+		this.inCheck = calculateAttackOnTile(opponentLegalMoves, this.king.position).length > 0;
+	}
+	isInCheck(){ return this.inCheck; }
+	isInCheckMate(){
+		return this.inCheck && !hasEscapeMoves(this.legalMoves);
+	}
+	isInStaleMate(){
+		return !this.inCheck && !hasEscapeMoves(this.legalMoves);
 	}
 	getLegalMoves(){ return this.legalMoves; }
 }
