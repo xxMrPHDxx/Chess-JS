@@ -1,6 +1,7 @@
 import {loadAssets} from './loaders.js';
 import Board from './Board/Board.js';
 import MoveFactory from './Move/MoveFactory.js';
+import Stack from './Stack.js';
 
 import {PawnEnPassantAttack, CastlingMove} from './Move/Move.js';
 import {Rook, Knight, Bishop, Queen, King, Pawn} from './Piece/Piece.js';
@@ -21,9 +22,14 @@ Set.prototype.random = function(){
 const canvas = document.querySelector('canvas#ChessGrid');
 const ctx = canvas.getContext('2d');
 
+const buttons = {
+	undo: document.querySelector('button#Undo')
+}
+
 loadAssets().then(run);
 
 let board, sourceTile, destTile;
+const history = new Stack();
 const hints = [];
 
 function run(){
@@ -38,6 +44,7 @@ function run(){
 	// ],true,Array(64).fill(true).map((_,i)=>i!==17));
 	sourceTile = destTile = null;
 
+	history.push(board);
 	UpdateBoard(board);
 
 	window.player = board.player;
@@ -56,7 +63,15 @@ function run(){
 	});
 	canvas.addEventListener('contextmenu', e=>e.preventDefault());
 
-	window.MoveStatus = MoveStatus;
+	buttons.undo.addEventListener('click', e=>{
+		try{
+			if(history.length > 1){
+				history.pop();
+				board = history.peek();
+				UpdateBoard();
+			}
+		}catch(e){ return; };
+	});
 }
 
 function UpdateBoard(){
@@ -103,7 +118,10 @@ function OnTileClicked(row, col){
 		destTile = tile;
 		if(sourceTile !== destTile){
 			const transition = MoveFactory.createMove(board, sourceTile, destTile);
-			if(transition.isSuccess()) board = transition.board;
+			if(transition.isSuccess()){
+				board = transition.board;
+				history.push(board);
+			}
 		}
 		sourceTile = destTile = null;
 	}
