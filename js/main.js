@@ -32,8 +32,8 @@ const log = {
 };
 
 const options = {
-	WhitePlayer: 'Player',
-	BlackPlayer: 'Player'
+	WhitePlayer: document.querySelector('select#White').selectedOptions[0].value,
+	BlackPlayer: document.querySelector('select#Black').selectedOptions[0].value
 }
 
 loadAssets().then(run);
@@ -90,11 +90,16 @@ function run(){
 	.forEach((playerConfig, i)=>{
 		playerConfig.addEventListener('change', e=>{
 			options[i===0?'WhitePlayer':'BlackPlayer'] = playerConfig.selectedOptions[0].value;
-			if(options.WhitePlayer === options.BlackPlayer && options.WhitePlayer === 'Computer'){
-				ComVsCom(board, ai);				
-			}
-		})
+			ReloadOption(e);
+		});
 	});
+	ReloadOption(null);
+}
+
+function ReloadOption(e){
+	if(options.WhitePlayer === options.BlackPlayer && options.WhitePlayer === 'Computer'){
+		ComVsCom(board, ai);				
+	}
 }
 
 function ComVsCom(currentBoard, ai){
