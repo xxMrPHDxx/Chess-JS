@@ -2,6 +2,7 @@ import {loadAssets} from './loaders.js';
 import Board from './Board/Board.js';
 import MoveFactory from './Move/MoveFactory.js';
 import Stack from './Stack.js';
+import {MiniMax} from './AI/MoveStrategy.js';
 
 import {PawnEnPassantAttack, CastlingMove} from './Move/Move.js';
 import {Rook, Knight, Bishop, Queen, King, Pawn} from './Piece/Piece.js';
@@ -24,11 +25,21 @@ const ctx = canvas.getContext('2d');
 
 const buttons = {
 	undo: document.querySelector('button#Undo')
+};
+
+const log = {
+	AI: document.querySelector('div#AILog')
+};
+
+const options = {
+	WhitePlayer: 'Player',
+	BlackPlayer: 'Player'
 }
 
 loadAssets().then(run);
 
 let board, sourceTile, destTile;
+let ai;
 const history = new Stack();
 const hints = [];
 
@@ -43,6 +54,8 @@ function run(){
 	// 	-4,-4,-4,-4,-5,-4,-4,-4
 	// ],true,Array(64).fill(true).map((_,i)=>i!==17));
 	sourceTile = destTile = null;
+
+	ai = new MiniMax();
 
 	history.push(board);
 	UpdateBoard(board);
@@ -71,6 +84,33 @@ function run(){
 				UpdateBoard();
 			}
 		}catch(e){ return; };
+	});
+
+	[...document.querySelectorAll('select#White, select#Black')]
+	.forEach((playerConfig, i)=>{
+		playerConfig.addEventListener('change', e=>{
+			options[i===0?'WhitePlayer':'BlackPlayer'] = playerConfig.selectedOptions[0].value;
+			if(options.WhitePlayer === options.BlackPlayer && options.WhitePlayer === 'Computer'){
+				ComVsCom(board, ai);				
+			}
+		})
+	});
+}
+
+function ComVsCom(currentBoard, ai){
+	const depth = currentBoard.currentPlayer.isWhite() ? 3 : 2; // White clever than Black
+	getAIMove(currentBoard, ai, depth)
+	.then(nextBoard=>{
+		if(!nextBoard) return;
+		board = nextBoard;
+		UpdateBoard();
+		for(const p in nextBoard.player){
+			const player = nextBoard.player[p];
+			if(player.isInCheckMate() || player.isInStaleMate()){
+				return;
+			}
+		}
+		return ComVsCom(nextBoard, ai);
 	});
 }
 
@@ -125,4 +165,23 @@ function OnTileClicked(row, col){
 		}
 		sourceTile = destTile = null;
 	}
+}
+
+function delay(value, ms){
+	return new Promise(resolve=>setTimeout(()=>resolve(value), ms));
+}
+
+function getAIMove(board, ai, depth=2){
+	return new Promise((resolve,reject)=>{
+		try{
+			log.AI.innerText = `${
+				board.currentPlayer.isWhite() ? 'White' : 'Black'
+			} Player is thinking...`;
+			let move = ai.execute(board, depth);
+			resolve(move === null ? null : move.execute());
+		}catch(e){ reject(e); }
+	})
+	.catch(console.error)
+	.then(board=>delay(board, 100))
+	.then(board=>{log.AI.innerText = 'Done!';return board;})
 }

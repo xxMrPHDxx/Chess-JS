@@ -31,6 +31,8 @@ export default class Player {
 		}
 		this.inCheck = calculateAttackOnTile(opponentLegalMoves, this.king.position).length > 0;
 	}
+	isWhite(){ return this.alliance === Alliance.White; }
+	isBlack(){ return this.alliance === Alliance.Black; }
 	isInCheck(){ return this.inCheck; }
 	isInCheckMate(){
 		return this.inCheck && !hasEscapeMoves(this.legalMoves);
@@ -39,4 +41,5 @@ export default class Player {
 		return !this.inCheck && !hasEscapeMoves(this.legalMoves);
 	}
 	getLegalMoves(){ return this.legalMoves; }
+	getActivePieces(){ return this.activePieces; }
 }

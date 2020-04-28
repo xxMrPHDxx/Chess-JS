@@ -20,6 +20,18 @@ export default class Piece {
 		this.position = position;
 		this.firstMove = firstMove;
 	}
+	set value(value){ /*pass*/ }
+	get value(){
+		switch(this.type){
+			case Piece.Rook: return 500;
+			case Piece.Knight: return 300;
+			case Piece.Bishop: return 300;
+			case Piece.Queen: return 900;
+			case Piece.King: return 10000;
+			case Piece.Pawn: return 100;
+		}
+		return 0;
+	}
 	calculateLegalMoves(board){
 		if(!(board instanceof Board))
 			throw new Error('ArgumentError: Expecting Board object at argument 1!');
@@ -237,7 +249,6 @@ export class Pawn extends Piece {
 						const behindPawn = board.tiles[pawn.position+8*Alliance.Forward(this.alliance)];
 						const beside = Math.abs(this.position - pawn.position) === 1;
 						if(beside && behindPawn.position === destination && pawn.alliance !== this.alliance){
-							console.log('Adding enpassant attack move!');
 							legalMoves.add(new PawnEnPassantAttack(board,this,destination,pawn));
 						}
 					}
